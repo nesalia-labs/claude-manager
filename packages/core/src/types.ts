@@ -27,6 +27,13 @@ export type SessionStatus = "running" | "idle" | "done";
 
 /** A live sub-agent spawned by a session via the `Agent` tool. */
 export interface SubAgent {
+  /**
+   * Stable identifier from the source filename
+   * (`agent-<uuid>.jsonl`) so list rendering can use a non-index key.
+   * Optional for backwards compatibility with tests/fixtures that
+   * construct `SubAgent` literals.
+   */
+  readonly id?: string;
   readonly model: string | null;
   readonly ctx: number | null;
   readonly activity: string | null;

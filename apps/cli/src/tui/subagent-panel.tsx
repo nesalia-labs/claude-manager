@@ -16,13 +16,7 @@ const STATUS_GLYPHS = {
   // tool_use label. Future v0.2 work: emit a `running` field on
   // `SubAgent` for a richer display.
   live: "◆",
-};
-
-function fmtContext(n: number | null): string {
-  if (n === null) return "?";
-  if (n >= 1000) return `${Math.round(n / 1000)}k`;
-  return String(n);
-}
+} as const;
 
 export function SubagentPanel({ subagents }: SubagentPanelProps): React.ReactNode {
   if (subagents.length === 0) {
@@ -39,7 +33,10 @@ export function SubagentPanel({ subagents }: SubagentPanelProps): React.ReactNod
       </text>
       {subagents.map((sa, idx) => (
         <box
-          key={idx}
+          // `id` is stable across re-sorts; fall back to a composite of the
+          // visible fields if a literal was constructed without an id (e.g.
+          // in tests). The index alone would remount rows on every reorder.
+          key={sa.id ?? `${sa.model ?? "?"}-${sa.activity ?? ""}-${sa.uptimeSec}-${idx}`}
           flexDirection="row"
           width="100%"
           paddingLeft={4}
@@ -53,4 +50,12 @@ export function SubagentPanel({ subagents }: SubagentPanelProps): React.ReactNod
       ))}
     </box>
   );
+}
+
+/** "12345" → "12k", null → "?". Local to this panel — different scale
+ * than the session-level token formatter. */
+function fmtContext(n: number | null): string {
+  if (n === null) return "?";
+  if (n >= 1000) return `${Math.round(n / 1000)}k`;
+  return String(n);
 }

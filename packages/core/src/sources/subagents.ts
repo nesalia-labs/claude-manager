@@ -128,6 +128,9 @@ export function createNodeSubagentSource(): SubagentSource {
         if (!live) continue;
 
         const agent: SubAgent = {
+          // Filename is `agent-<uuid>.jsonl`; the bare prefix is a stable,
+          // unique id suitable for React list keys.
+          id: file.replace(/\.jsonl$/, ""),
           model: ctx.model,
           ctx: ctx.ctx,
           activity: ctx.activity,

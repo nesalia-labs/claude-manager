@@ -10,21 +10,14 @@
 
 import type { ToolLogEntry } from "@claude-manager/core";
 
+import {
+  TOOL_STATUS_COLORS,
+  TOOL_STATUS_GLYPHS,
+} from "./format.js";
+
 interface ToolLogPanelProps {
   entries: readonly ToolLogEntry[];
 }
-
-const STATUS_COLORS: Record<ToolLogEntry["status"], string> = {
-  pending: "#e0af68",
-  done: "#9ece6a",
-  error: "#f7768e",
-};
-
-const STATUS_GLYPHS: Record<ToolLogEntry["status"], string> = {
-  pending: "⠿",
-  done: "✓",
-  error: "✗",
-};
 
 function fmtDuration(ms: number | undefined): string {
   if (ms === undefined) return "";
@@ -48,14 +41,17 @@ export function ToolLogPanel({ entries }: ToolLogPanelProps): React.ReactNode {
   return (
     <box flexDirection="column" width="100%">
       <text fg="#bb9af7">{`  Tool log (${entries.length})`}</text>
-      {entries.map((e, idx) => (
+      {entries.map((e) => (
         <box
-          key={`${e.toolUseId}-${idx}`}
+          // `toolUseId` is unique per tool_use; using the array index would
+          // remount rows on every re-sort (newest-first) and reset per-row
+          // state.
+          key={e.toolUseId}
           flexDirection="row"
           width="100%"
           paddingLeft={4}
         >
-          <text fg={STATUS_COLORS[e.status]}>{`${STATUS_GLYPHS[e.status]} `}</text>
+          <text fg={TOOL_STATUS_COLORS[e.status]}>{`${TOOL_STATUS_GLYPHS[e.status]} `}</text>
           <text fg="#565f89">{fmtTime(e.atMs)}</text>
           <text fg="#565f89">{"  "}</text>
           <text fg="#c0caf5">{e.target.padEnd(48)}</text>
