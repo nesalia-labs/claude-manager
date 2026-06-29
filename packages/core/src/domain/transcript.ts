@@ -15,6 +15,37 @@ export interface Details {
   prompt?: string;
   promptAt?: number; // unix ms of the last user prompt
   lastTurn?: string;
+  /** Most recent text content the assistant produced (last "message"). */
+  lastMessage?: string;
+}
+
+const LAST_MESSAGE_MAX = 500;
+
+function extractLastText(content: unknown): string | null {
+  if (!Array.isArray(content)) return null;
+  // Walk blocks in reverse; concatenate contiguous `text` blocks, stopping
+  // at the first non-text block (so a tool_use doesn't fragment the
+  // surrounding prose).
+  let buf = "";
+  for (let i = content.length - 1; i >= 0; i--) {
+    const block = content[i] as { type?: unknown; text?: unknown };
+    if (!block || typeof block !== "object") return null;
+    if (block.type !== "text") {
+      // First non-text block: cap the buffer we've collected.
+      break;
+    }
+    const t = block.text;
+    if (typeof t === "string" && t.length > 0) {
+      buf = t.length > buf.length ? t : t + (buf ? "\n" + buf : "");
+    }
+  }
+  if (!buf) return null;
+  // Collapse whitespace and clamp.
+  const flat = buf.replace(/\s+/g, " ").trim();
+  if (!flat) return null;
+  return flat.length > LAST_MESSAGE_MAX
+    ? flat.slice(0, LAST_MESSAGE_MAX - 1) + "…"
+    : flat;
 }
 
 const PROMPT_MAX = 2048;
@@ -36,17 +67,25 @@ export function noteEntry(details: Details, entry: Record<string, unknown>): voi
 
   // Last non-sidechain, non-synthetic, non-isMeta assistant turn gives us
   // model + context size + last-turn label.
-  if (type === "assistant" && e["isSidechain"] !== true && !details.model) {
+  if (type === "assistant" && e["isSidechain"] !== true) {
     const message = e["message"] as
-      | { usage?: Record<string, number>; model?: string }
+      | { usage?: Record<string, number>; model?: string; content?: unknown }
       | undefined;
     const usage = message?.usage;
     const model = message?.model;
     if (usage && model && model !== "<synthetic>") {
-      details.model = model;
-      details.ctx = contextTokens(usage);
-      const label = describeAssistant(message);
-      if (label !== null) details.lastTurn = label;
+      if (!details.model) {
+        details.model = model;
+        details.ctx = contextTokens(usage);
+        const label = describeAssistant(message);
+        if (label !== null) details.lastTurn = label;
+      }
+      // Most recent assistant text content (the last message the agent
+      // produced). Stripped of newlines + truncated to 500 chars.
+      const text = extractLastText(message?.content);
+      if (text) {
+        details.lastMessage = text;
+      }
     }
   }
 

@@ -74,6 +74,8 @@ export interface Instance {
   readonly uptimeSec: number;
   readonly lastMs: number;
   readonly prompt: string | null;
+  /** Most recent assistant text message (the "last message"). */
+  readonly lastMessage: string | null;
   readonly processAlive: boolean;
   readonly transcript: string | null;
   readonly subagents: readonly SubAgent[];
