@@ -13,13 +13,16 @@
  * signal anyway).
  */
 
-import { spawnSync } from "node:child_process";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
 import type { Proc, ProcSource } from "./types.js";
 
 const DEFAULT_TTL_MS = 2000;
 
 const BOM_MARK = "﻿";
+
+const execFileAsync = promisify(execFile);
 
 export interface WindowsProcOptions {
   /** TTL in ms for the cached `tasklist` snapshot. Default 2000. */
@@ -32,17 +35,27 @@ export function createWindowsProcSource(
   const ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
   let cached: { atMs: number; byPid: Map<number, Proc> } | null = null;
 
-  function refresh(): { atMs: number; byPid: Map<number, Proc> } {
-    const r = spawnSync("tasklist", ["/FO", "CSV", "/NH"], {
-      encoding: "utf8",
-      windowsHide: true,
-    });
-    if (r.status !== 0 || !r.stdout) {
+  async function runTasklist(): Promise<string> {
+    try {
+      const { stdout } = await execFileAsync(
+        "tasklist",
+        ["/FO", "CSV", "/NH"],
+        { windowsHide: true },
+      );
+      return stdout;
+    } catch {
+      return "";
+    }
+  }
+
+  async function refresh(): Promise<{ atMs: number; byPid: Map<number, Proc> }> {
+    const stdout = await runTasklist();
+    if (!stdout) {
       cached = { atMs: Date.now(), byPid: new Map() };
       return cached;
     }
     const out: Proc[] = [];
-    for (const line of r.stdout.split(/\r?\n/)) {
+    for (const line of stdout.split(/\r?\n/)) {
       if (!line) continue;
       const cleaned = line.startsWith(BOM_MARK) ? line.slice(1) : line;
       const cols = parseCsvLine(cleaned);
@@ -71,7 +84,7 @@ export function createWindowsProcSource(
       if (cached && now - cached.atMs < ttlMs) {
         return [...cached.byPid.values()];
       }
-      const fresh = refresh();
+      const fresh = await refresh();
       return [...fresh.byPid.values()];
     },
     async cwdOf(_pid: number): Promise<string | null> {
