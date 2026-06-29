@@ -1,6 +1,6 @@
 {
   "name": "@claude-manager/cli",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "private": false,
   "description": "Windows terminal dashboard for monitoring live Claude Code sessions",
   "license": "MIT",
@@ -14,13 +14,32 @@
     "README.md",
     "LICENSE"
   ],
+  "sideEffects": false,
   "engines": {
     "node": ">=22"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nesalia-labs/claude-manager.git",
+    "directory": "apps/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/nesalia-labs/claude-manager/issues"
+  },
+  "homepage": "https://github.com/nesalia-labs/claude-manager#readme",
+  "keywords": [
+    "claude-code",
+    "tui",
+    "dashboard",
+    "monitor",
+    "windows",
+    "read-only"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsx watch src/cli.ts",
-    "start": "node dist/index.js",
+    "start": "node dist/cli.js",
+    "prepublishOnly": "node -e \"const fs=require('fs');const p='dist/cli.js';const s=fs.readFileSync(p,'utf8');if(!s.startsWith('#!')){fs.writeFileSync(p,'#!/usr/bin/env node\\n'+s);}\"",
     "test": "vitest --run --passWithNoTests",
     "test:watch": "vitest",
     "lint": "eslint . --max-warnings 0",
