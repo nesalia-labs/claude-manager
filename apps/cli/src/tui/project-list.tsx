@@ -9,6 +9,8 @@
 
 import type { Instance } from "@claude-manager/core";
 
+import { STATUS_COLORS, STATUS_GLYPHS, fmtAgo, fmtContext } from "./format.js";
+
 interface ProjectGroup {
   project: string;
   instances: Instance[];
@@ -28,18 +30,6 @@ interface ProjectListProps {
   /** True when the snapshot has zero sessions — render a centered empty state. */
   empty?: boolean;
 }
-
-const STATUS_COLORS: Record<Instance["status"], string> = {
-  running: "#9ece6a",
-  idle: "#e0af68",
-  done: "#565f89",
-};
-
-const STATUS_GLYPHS: Record<Instance["status"], string> = {
-  running: "●",
-  idle: "○",
-  done: "·",
-};
 
 export function ProjectList({
   grouped,
@@ -65,6 +55,8 @@ export function ProjectList({
       </box>
     );
   }
+  // Single timestamp per render — avoids calling Date.now() once per row.
+  const now = Date.now();
   return (
     <scrollbox
       focused
@@ -112,7 +104,7 @@ export function ProjectList({
                     <text fg="#565f89">{"  "}</text>
                     <text fg="#bb9af7">{fmtContext(inst.contextTokens)}</text>
                     <text fg="#565f89">{"  ·  "}</text>
-                    <text fg="#565f89">{fmtAgo(nowMs() - inst.lastMs)}</text>
+                    <text fg="#565f89">{fmtAgo(inst.lastMs, now)}</text>
                   </box>
                 );
               })
@@ -125,13 +117,6 @@ export function ProjectList({
     </scrollbox>
   );
 }
-
-function truncate(s: string, n: number): string {
-  return s.length <= n ? s : `${s.slice(0, n - 1)}…`;
-}
-// truncate is no longer used by the row layout; keep available for
-// future detail-pane use.
-void truncate;
 
 /** "MiniMax-M3" → "M-M3", "claude-sonnet-4-5-20260101" → "sonnet-4-5". */
 function shortModel(model: string | null): string {
@@ -156,27 +141,3 @@ function shortPath(p: string | null): string {
   if (segs.length === 0) return trimmed || "(unknown)";
   return segs[segs.length - 1] ?? p;
 }
-
-/** "12345" → "12k", "1234567" → "1.2M", null → "?" */
-function fmtContext(n: number | null): string {
-  if (n === null) return "?ctx";
-  if (n < 1000) return `${n}ctx`;
-  if (n < 1_000_000) return `${(n / 1000).toFixed(n < 10_000 ? 1 : 0)}kctx`;
-  return `${(n / 1_000_000).toFixed(1)}Mctx`;
-}
-
-/** "1500ms" → "1s", "120000ms" → "2m", "3600000ms" → "1h. */
-function fmtAgo(ms: number): string {
-  if (ms < 0) ms = 0;
-  const s = Math.floor(ms / 1000);
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  const d = Math.floor(h / 24);
-  return `${d}d`;
-}
-
-/** Live clock for "ago" computation. */
-const nowMs = (): number => Date.now();

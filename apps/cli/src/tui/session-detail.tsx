@@ -12,6 +12,13 @@ import type { Instance } from "@claude-manager/core";
 import { SubagentPanel } from "./subagent-panel.js";
 import { ThinkingPanel } from "./thinking-panel.js";
 import { ToolLogPanel } from "./tool-log.js";
+import {
+  STATUS_COLORS,
+  STATUS_GLYPHS,
+  fmtAgo,
+  fmtContext,
+  truncate,
+} from "./format.js";
 
 interface SessionDetailProps {
   instance: Instance | null;
@@ -19,42 +26,11 @@ interface SessionDetailProps {
   onToggleThinking: () => void;
 }
 
-const STATUS_COLORS: Record<Instance["status"], string> = {
-  running: "#9ece6a",
-  idle: "#e0af68",
-  done: "#565f89",
-};
-
-const STATUS_GLYPHS: Record<Instance["status"], string> = {
-  running: "●",
-  idle: "○",
-  done: "·",
-};
-
-function fmtContext(n: number | null): string {
-  if (n === null) return "—";
-  if (n < 1000) return `${n} tokens`;
-  if (n < 1_000_000) return `${(n / 1000).toFixed(n < 10_000 ? 1 : 0)}k tokens`;
-  return `${(n / 1_000_000).toFixed(1)}M tokens`;
-}
-
 function fmtUptime(sec: number): string {
   if (sec < 60) return `${sec}s`;
   if (sec < 3600) return `${Math.floor(sec / 60)}m`;
   if (sec < 86400) return `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m`;
-  return `${Math.floor(sec / 86400)}d ${Math.floor(sec % 86400 / 3600)}h`;
-}
-
-function fmtAgo(ms: number, now: number): string {
-  const d = Math.max(0, now - ms);
-  if (d < 1000) return "now";
-  const s = Math.floor(d / 1000);
-  if (s < 60) return `${s}s ago`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  return `${Math.floor(sec / 86400)}d ${Math.floor((sec % 86400) / 3600)}h`;
 }
 
 export function SessionDetail({
@@ -157,8 +133,4 @@ function KV({ label, value, accent }: KVProps): React.ReactNode {
       <text fg={accent ? "#bb9af7" : "#c0caf5"}>{value}</text>
     </box>
   );
-}
-
-function truncate(s: string, n: number): string {
-  return s.length <= n ? s : `${s.slice(0, n - 1)}…`;
 }
