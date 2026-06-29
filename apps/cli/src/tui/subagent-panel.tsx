@@ -8,6 +8,12 @@ import type { SubAgent } from "@claude-manager/core";
 
 interface SubagentPanelProps {
   subagents: readonly SubAgent[];
+  /**
+   * Max height (in rows) for the inner scrollbox. When `undefined`, the
+   * list renders inline with no internal scroll. Pass a value to keep a
+   * long list of live sub-agents from pushing sibling content off-screen.
+   */
+  maxHeight?: number;
 }
 
 const STATUS_GLYPHS = {
@@ -18,7 +24,10 @@ const STATUS_GLYPHS = {
   live: "◆",
 } as const;
 
-export function SubagentPanel({ subagents }: SubagentPanelProps): React.ReactNode {
+export function SubagentPanel({
+  subagents,
+  maxHeight,
+}: SubagentPanelProps): React.ReactNode {
   if (subagents.length === 0) {
     return (
       <box flexDirection="column" width="100%">
@@ -26,8 +35,8 @@ export function SubagentPanel({ subagents }: SubagentPanelProps): React.ReactNod
       </box>
     );
   }
-  return (
-    <box flexDirection="column" width="100%">
+  const rows = (
+    <>
       <text fg="#bb9af7">
         {`  Subagents (${subagents.length})`}
       </text>
@@ -48,8 +57,22 @@ export function SubagentPanel({ subagents }: SubagentPanelProps): React.ReactNod
           <text fg="#565f89">{`  ${sa.uptimeSec}s`}</text>
         </box>
       ))}
-    </box>
+    </>
   );
+  if (maxHeight !== undefined) {
+    return (
+      <scrollbox
+        width="100%"
+        height={maxHeight}
+        scrollY
+        scrollbarOptions={{ showArrows: false }}
+        flexDirection="column"
+      >
+        {rows}
+      </scrollbox>
+    );
+  }
+  return <box flexDirection="column" width="100%">{rows}</box>;
 }
 
 /** "12345" → "12k", null → "?". Local to this panel — different scale

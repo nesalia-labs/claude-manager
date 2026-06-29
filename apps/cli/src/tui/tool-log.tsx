@@ -17,6 +17,12 @@ import {
 
 interface ToolLogPanelProps {
   entries: readonly ToolLogEntry[];
+  /**
+   * Max height (in rows) for the inner scrollbox. When `undefined`, the
+   * log renders inline with no internal scroll. Pass a value to keep a
+   * long list of tool calls from pushing sibling content off-screen.
+   */
+  maxHeight?: number;
 }
 
 function fmtDuration(ms: number | undefined): string {
@@ -30,7 +36,10 @@ function fmtTime(atMs: number): string {
   return new Date(atMs).toISOString().slice(11, 19); // HH:MM:SS
 }
 
-export function ToolLogPanel({ entries }: ToolLogPanelProps): React.ReactNode {
+export function ToolLogPanel({
+  entries,
+  maxHeight,
+}: ToolLogPanelProps): React.ReactNode {
   if (entries.length === 0) {
     return (
       <box flexDirection="column" width="100%">
@@ -38,8 +47,8 @@ export function ToolLogPanel({ entries }: ToolLogPanelProps): React.ReactNode {
       </box>
     );
   }
-  return (
-    <box flexDirection="column" width="100%">
+  const rows = (
+    <>
       <text fg="#bb9af7">{`  Tool log (${entries.length})`}</text>
       {entries.map((e) => (
         <box
@@ -58,6 +67,20 @@ export function ToolLogPanel({ entries }: ToolLogPanelProps): React.ReactNode {
           <text fg="#565f89">{e.status === "pending" ? "…" : ` ${fmtDuration(e.durationMs)}`}</text>
         </box>
       ))}
-    </box>
+    </>
   );
+  if (maxHeight !== undefined) {
+    return (
+      <scrollbox
+        width="100%"
+        height={maxHeight}
+        scrollY
+        scrollbarOptions={{ showArrows: false }}
+        flexDirection="column"
+      >
+        {rows}
+      </scrollbox>
+    );
+  }
+  return <box flexDirection="column" width="100%">{rows}</box>;
 }

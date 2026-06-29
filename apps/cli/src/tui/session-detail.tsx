@@ -51,12 +51,18 @@ function SessionDetailImpl({
   const toolCount = instance.toolLog.length;
 
   return (
-    <box
-      flexDirection="column"
+    // Outer scrollbox: the entire detail panel scrolls when content
+    // overflows the viewport. NOT `focused` — keyboard navigation is
+    // owned by ProjectList, and a second focused scrollbox would
+    // double-handle key events.
+    <scrollbox
       width="50%"
       flexGrow={flexGrow ?? 1}
       paddingLeft={1}
       paddingRight={1}
+      scrollY
+      stickyScroll
+      scrollbarOptions={{ showArrows: false }}
     >
       {/* Header row: name + status */}
       <box flexDirection="row" width="100%">
@@ -110,16 +116,25 @@ function SessionDetailImpl({
         </box>
       ) : null}
 
-      {/* Subagents */}
+      {/* Subagents — own nested scrollbox so a long list of live
+          sub-agents doesn't push the tool log off-screen. */}
       <box flexDirection="column" width="100%" paddingTop={1}>
-        <SubagentPanel subagents={instance.subagents} />
+        <SubagentPanel
+          subagents={instance.subagents}
+          maxHeight={6}
+        />
       </box>
 
-      {/* Tool log */}
+      {/* Tool log — own nested scrollbox. The tool log can easily have
+          15+ entries and the rows wrap at 50% width, so we cap its
+          visible height and let it scroll internally. */}
       <box flexDirection="column" width="100%" paddingTop={1}>
-        <ToolLogPanel entries={instance.toolLog} />
+        <ToolLogPanel
+          entries={instance.toolLog}
+          maxHeight={10}
+        />
       </box>
-    </box>
+    </scrollbox>
   );
 }
 
