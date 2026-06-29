@@ -149,11 +149,15 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
       setThinkingExpanded((v) => !v);
       return;
     }
-    // Number keys 1..4 switch the view tab.
-    if (e.name === "1") return setView("all");
-    if (e.name === "2") return setView("running");
-    if (e.name === "3") return setView("idle");
-    if (e.name === "4") return setView("done");
+    // Number keys 1..4 switch the view tab — but only when the filter
+    // input is *not* focused, so typing "1" in the filter doesn't
+    // silently switch tabs.
+    if (!filterFocused) {
+      if (e.name === "1") return setView("all");
+      if (e.name === "2") return setView("running");
+      if (e.name === "3") return setView("idle");
+      if (e.name === "4") return setView("done");
+    }
   });
 
   const selectedInstance = useMemo<Instance | null>(() => {
