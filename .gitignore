@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Turbo cache
+.turbo/
+
+# Test coverage
+coverage/
+*.lcov
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Local-only (vendored references, scratch space)
+# `temp/` holds vendored reference clones (e.g. cctop) used during
+# research and prototyping. Never commit — it can be re-cloned from
+# the upstream repo if needed.
+temp/
+
+# Claude AI agent memory (private dev-environment context). Never commit.
+.claude/
+
+# OS-specific
+Thumbs.db

@@ -1,0 +1,42 @@
+{
+  "name": "@claude-manager/core",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Headless library for collecting live Claude Code session data",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./internal/*": {
+      "types": "./dist/internal/*.d.ts",
+      "default": "./dist/internal/*.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist .turbo coverage *.tsbuildinfo"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "memfs": "^4.11.1",
+    "tsx": "^4.19.2",
+    "vitest": "^2.1.5"
+  }
+}
