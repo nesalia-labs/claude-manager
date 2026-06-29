@@ -51,9 +51,10 @@ export function createCollector(opts: CollectorOptions = {}): Collector {
 
   async function tick(): Promise<void> {
     try {
-      const snap = await collectOnce(sources, { watchMs, thresholds });
-      const events = store.setAll(snap.instances, snap.atMs);
-      for (const ev of events) store.emit(ev);
+      const result = await collectOnce(sources, { watchMs, thresholds });
+      const diff = store.setAll(result.instances, result.atMs);
+      for (const ev of diff) store.emit(ev);
+      for (const ev of result.events) store.emit(ev);
     } catch (err) {
       store.emit({
         kind: "error",
@@ -65,9 +66,6 @@ export function createCollector(opts: CollectorOptions = {}): Collector {
 
   function start(): void {
     if (timer || closed) return;
-    inflight = tick().finally(() => {
-      inflight = null;
-    });
     timer = setInterval(() => {
       if (closed) return;
       if (inflight) return;
@@ -84,14 +82,19 @@ export function createCollector(opts: CollectorOptions = {}): Collector {
     }
   }
 
+  // Polling starts eagerly so callers who only ever call `refresh()` or
+  // `snapshot()` still get fresh data on the periodic cadence. Subscribers
+  // receive both the periodic ticks and any one-shot refreshes. The first
+  // tick is deferred to the first interval fire so construction stays
+  // side-effect-free (no surprise I/O on create).
+  start();
+
   return {
     snapshot(): Snapshot {
       return store.read(sources.clock.now());
     },
     subscribe(listener: (event: CollectorEvent) => void): Unsubscribe {
-      const off = store.subscribe(listener);
-      if (!timer && !closed) start();
-      return off;
+      return store.subscribe(listener);
     },
     async refresh(): Promise<Snapshot> {
       if (closed) throw new Error("collector is closed");
