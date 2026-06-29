@@ -7,6 +7,7 @@
  * in sync.
  */
 
+import { memo } from "react";
 import type { Instance } from "@claude-manager/core";
 
 import { SubagentPanel } from "./subagent-panel.js";
@@ -24,6 +25,8 @@ interface SessionDetailProps {
   instance: Instance | null;
   thinkingExpanded: boolean;
   onToggleThinking: () => void;
+  /** Flex grow ratio. Defaults to 1; layout must remain stable across renders. */
+  flexGrow?: number;
 }
 
 function fmtUptime(sec: number): string {
@@ -33,10 +36,11 @@ function fmtUptime(sec: number): string {
   return `${Math.floor(sec / 86400)}d ${Math.floor((sec % 86400) / 3600)}h`;
 }
 
-export function SessionDetail({
+function SessionDetailImpl({
   instance,
   thinkingExpanded,
   onToggleThinking,
+  flexGrow,
 }: SessionDetailProps): React.ReactNode {
   if (!instance) return null;
 
@@ -50,7 +54,7 @@ export function SessionDetail({
     <box
       flexDirection="column"
       width="50%"
-      flexGrow={1}
+      flexGrow={flexGrow ?? 1}
       paddingLeft={1}
       paddingRight={1}
     >
@@ -134,3 +138,11 @@ function KV({ label, value, accent }: KVProps): React.ReactNode {
     </box>
   );
 }
+
+/**
+ * Memoized so unrelated state changes upstream (e.g. snapshot ticks that
+ * don't change the visible session) don't re-render the detail panel.
+ * The parent (`App`) passes a stable `onToggleThinking` via `useCallback`
+ * so the memo boundary actually holds.
+ */
+export const SessionDetail = memo(SessionDetailImpl);

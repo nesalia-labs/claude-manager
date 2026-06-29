@@ -2,11 +2,16 @@
  * Project-grouped session list with selection.
  *
  * Wrapped in `<scrollbox>` so the list scrolls when it exceeds the
- * terminal height. `width="50%"` carves the panel in two with
- * `<SessionDetail>`; `stickyScroll` keeps new entries visible at the
- * bottom for live-tail behaviour.
+ * terminal height. The scrollbox keeps `width="50%"` so the layout is
+ * stable across selection state changes — the visible "full width"
+ * effect when no SessionDetail is mounted is purely from having a
+ * single flex child (no width prop change ⇒ no OpenTUI layout thrash
+ * on rapid clicks).
+ * `stickyScroll` keeps new entries visible at the bottom for live-tail
+ * behaviour.
  */
 
+import { memo } from "react";
 import type { Instance } from "@claude-manager/core";
 
 import { STATUS_COLORS, STATUS_GLYPHS, fmtAgo, fmtContext } from "./format.js";
@@ -25,20 +30,20 @@ interface ProjectListProps {
   selectedPid: number | null;
   onCursorChange: (next: number) => void;
   onSelectPid: (pid: number | null) => void;
-  /** When true, take the full width (no SessionDetail beside). */
-  fullWidth?: boolean;
+  /** Flex grow ratio. Defaults to 1; layout must remain stable across renders. */
+  flexGrow?: number;
   /** True when the snapshot has zero sessions — render a centered empty state. */
   empty?: boolean;
 }
 
-export function ProjectList({
+function ProjectListImpl({
   grouped,
   cursor,
   pidToFlatIndex,
   selectedPid,
   onCursorChange,
   onSelectPid,
-  fullWidth,
+  flexGrow,
   empty,
 }: ProjectListProps): React.ReactNode {
   if (empty) {
@@ -46,7 +51,7 @@ export function ProjectList({
       <box
         flexDirection="column"
         width="100%"
-        flexGrow={1}
+        flexGrow={flexGrow ?? 1}
         alignItems="center"
         justifyContent="center"
       >
@@ -61,8 +66,8 @@ export function ProjectList({
     <scrollbox
       focused
       stickyScroll
-      width={fullWidth ? "100%" : "50%"}
-      flexGrow={1}
+      width="50%"
+      flexGrow={flexGrow ?? 1}
       paddingLeft={1}
       paddingRight={1}
       scrollbarOptions={{ showArrows: false }}
@@ -117,6 +122,12 @@ export function ProjectList({
     </scrollbox>
   );
 }
+
+/**
+ * Memoized so unrelated state changes upstream (e.g. snapshot ticks that
+ * don't change the visible rows or cursor) don't re-render the list.
+ */
+export const ProjectList = memo(ProjectListImpl);
 
 /** "MiniMax-M3" → "M-M3", "claude-sonnet-4-5-20260101" → "sonnet-4-5". */
 function shortModel(model: string | null): string {

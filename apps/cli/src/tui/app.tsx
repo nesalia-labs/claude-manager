@@ -13,7 +13,7 @@
  *   r           → force refresh
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useKeyboard } from "@opentui/react";
 
 import {
@@ -166,6 +166,11 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
     return snapshot.instances.find((i) => i.pid === selectedPid) ?? null;
   }, [selectedPid, snapshot.instances]);
 
+  // Stable callback so React.memo on <SessionDetail> doesn't break on every parent render.
+  const handleToggleThinking = useCallback(() => {
+    setThinkingExpanded((v) => !v);
+  }, []);
+
   return (
     <box flexDirection="column" width="100%" height="100%">
       <HeaderBar
@@ -198,14 +203,15 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
           onCursorChange={setCursor}
           onSelectPid={setSelectedPid}
           selectedPid={selectedPid}
-          fullWidth={selectedInstance === null}
+          flexGrow={1}
           empty={snapshot.instances.length === 0}
         />
         {selectedInstance ? (
           <SessionDetail
             instance={selectedInstance}
             thinkingExpanded={thinkingExpanded}
-            onToggleThinking={() => setThinkingExpanded((v) => !v)}
+            onToggleThinking={handleToggleThinking}
+            flexGrow={1}
           />
         ) : null}
       </box>
