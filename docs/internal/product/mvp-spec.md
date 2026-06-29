@@ -1,5 +1,7 @@
 # MVP Specification — claude-manager v1
 
+> Last updated 2026-06-29 after v0.4 perf + UI upgrades.
+
 ## Summary
 
 A Windows-only TUI that lists every Claude Code session on the local machine, grouped by project, with drill-down into subagents and tool activity. Read-only. Local. Updated live. Distributed via `bunx`.
@@ -214,3 +216,18 @@ v1 is accepted when **all** of the following are true:
 - Detail pane layout: side-by-side vs vertical? Driven by terminal width (TBD threshold).
 - "Recently active" filter: 7 days is a guess. Validate against real CC usage patterns.
 - Should `done` sessions be filtered out entirely after some grace period (e.g. 5 minutes)?
+
+## Phased delivery plan
+
+The shipping milestone is v1 (the sharp tool) — every earlier tag is one
+shorter milestone on the way. This table is the live status as of the
+"Last updated" note above.
+
+| Tag | Title | Scope | Status |
+| --- | --- | --- | --- |
+| v0.1 | Skeleton + collector | Monorepo, `@claude-manager/core`, `@claude-manager/cli` argv parser, session registry + transcript tail on Windows. | **done** |
+| v0.2 | Subagents | Live subagent discovery under `<id>/subagents/`, model + context fields, liveness via mtime window. | **done** |
+| v0.3 | Tool log | Per-session tail of `tool_use` blocks with target, status, duration. | **done** |
+| v0.4 | Perf + UI hardening | Eager polling timer, async `tasklist`, typed error events from orchestrator, idempotent shutdown, regression coverage. | **in progress** |
+| v0.5 | TUI features | Filter input, view tabs (projects / sessions / detail), thinking block, session-detail drill-down. | **in progress** |
+| v1.0 | v1 release | npm publish for `@claude-manager/cli` + `@claude-manager/core`, GitHub Actions CI, `.github` metadata, polish. | **TODO** |
