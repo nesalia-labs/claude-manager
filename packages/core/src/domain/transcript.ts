@@ -41,7 +41,9 @@ function extractLastText(content: unknown): string | null {
     }
     const t = block.text;
     if (typeof t === "string" && t.length > 0) {
-      buf = t.length > buf.length ? t : t + (buf ? "\n" + buf : "");
+      // Always prepend: each earlier-in-walk block came before the
+      // later ones, so it goes ahead of what we've already accumulated.
+      buf = buf ? `${t}\n${buf}` : t;
     }
   }
   if (!buf) return null;
@@ -68,7 +70,9 @@ function extractLastThinking(content: unknown): string | null {
     if (block.type !== "thinking") break;
     const t = block.thinking;
     if (typeof t === "string" && t.length > 0) {
-      buf = t.length > buf.length ? t : t + (buf ? "\n" + buf : "");
+      // Always prepend: each earlier-in-walk block came before the
+      // later ones, so it goes ahead of what we've already accumulated.
+      buf = buf ? `${t}\n${buf}` : t;
     }
   }
   if (!buf) return null;
