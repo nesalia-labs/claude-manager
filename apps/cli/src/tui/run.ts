@@ -46,7 +46,11 @@ export async function runTui(opts: RunTuiOptions): Promise<void> {
     watchMs: opts.watchMs,
   });
 
-  const renderer = await createCliRenderer({ exitOnCtrlC: false });
+  // useThread: true moves the native render loop onto a Node `worker_thread`,
+  // which avoids a known Bun segfault in opentui.dll when the React tree
+  // rapidly mounts/unmounts (e.g. during filter typing). Without this, the
+  // crash surfaces as a hard segfault with the message blaming Bun.
+  const renderer = await createCliRenderer({ exitOnCtrlC: false, useThread: true });
   const root = createRoot(renderer);
 
   // Populate the first snapshot synchronously so the TUI renders with data
