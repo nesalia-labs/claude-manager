@@ -97,9 +97,10 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
 
   const [cursor, setCursor] = useState(0);
 
-  useEffect(() => {
-    setCursor((c) => Math.min(c, Math.max(0, flatRows.length - 1)));
-  }, [flatRows.length]);
+  // Derive a safe cursor every render instead of clamping via useEffect.
+  // The setter-in-render pattern fires an extra render and can lag a frame
+  // behind `flatRows`.
+  const safeCursor = Math.min(cursor, Math.max(0, flatRows.length - 1));
 
   // If the selected session disappeared from the filtered view, drop it.
   useEffect(() => {
@@ -187,7 +188,7 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
       <box flexDirection="row" width="100%" flexGrow={1}>
         <ProjectList
           grouped={grouped}
-          cursor={cursor}
+          cursor={safeCursor}
           pidToFlatIndex={pidToFlatIndex}
           onCursorChange={setCursor}
           onSelectPid={setSelectedPid}
