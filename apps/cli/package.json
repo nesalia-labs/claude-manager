@@ -1,6 +1,6 @@
 {
   "name": "@claude-manager/cli",
-  "version": "0.5.0",
+  "version": "0.1.0",
   "private": false,
   "description": "Windows terminal dashboard for monitoring live Claude Code sessions",
   "license": "MIT",

@@ -1,6 +1,6 @@
 {
   "name": "@claude-manager/core",
-  "version": "0.5.0",
+  "version": "0.1.0",
   "private": false,
   "description": "Headless library for collecting live Claude Code session data",
   "license": "MIT",

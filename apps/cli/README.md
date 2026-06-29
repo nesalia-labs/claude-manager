@@ -2,7 +2,7 @@
 
 > Windows terminal dashboard for monitoring live Claude Code sessions.
 
-Part of the [`claude-manager`](https://github.com/your-org/claude-manager) monorepo. Thin CLI over [`@claude-manager/core`](../core).
+Part of the [`claude-manager`](https://github.com/nesalia-labs/claude-manager) monorepo. Thin CLI over [`@claude-manager/core`](../core).
 
 ## Install
 

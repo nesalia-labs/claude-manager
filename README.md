@@ -43,7 +43,11 @@ See `docs/internal/product/` for the full product documents (overview, MVP spec,
 
 ## Status
 
-**Pre-alpha.** v1 is in planning. The product documents are stable; the code skeleton is being set up. See the [MVP spec](./docs/internal/product/mvp-spec.md) for what v1 will deliver.
+**v0.5 in progress — TUI feature work.** v0.1–v0.4 are done (skeleton, subagents, tool log, perf + UI hardening). v1.0 (npm publish + CI + `.github` metadata) is the next stop. ~80 tests across the monorepo are green; `pnpm build`, `pnpm lint`, and `pnpm test` all pass on Windows + Node 22. See the [MVP spec](./docs/internal/product/mvp-spec.md) for the live phased plan.
+
+## Documentation
+
+The product documents live under [`docs/internal/product/`](./docs/internal/product/README.md): the overview, MVP spec, architecture, user stories, competitor landscape, and roadmap. They are written for internal use — defining what we are building, why, and how v1 fits together.
 
 ## Development
 

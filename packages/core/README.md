@@ -2,7 +2,7 @@
 
 > Headless library for collecting live Claude Code session data.
 
-Part of the [`claude-manager`](https://github.com/your-org/claude-manager) monorepo.
+Part of the [`claude-manager`](https://github.com/nesalia-labs/claude-manager) monorepo.
 
 `@claude-manager/core` is renderer-agnostic. The CLI binary (`@claude-manager/cli`) is one consumer; a web dashboard, a VS Code extension, or a test script could be another.
 
