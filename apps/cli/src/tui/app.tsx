@@ -13,7 +13,15 @@
  *   r           → force refresh
  */
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useKeyboard } from "@opentui/react";
 
 import {
@@ -42,14 +50,63 @@ interface AppProps {
 
 export function App({ collector, onQuit }: AppProps): React.ReactNode {
   const [snapshot, setSnapshot] = useState<Snapshot>(collector.snapshot());
-  const [selectedPid, setSelectedPid] = useState<number | null>(null);
+  // Pending snapshot to commit on the next rAF. We coalesce a burst of
+  // collector events into one React state update per frame, which keeps
+  // the reconciler from falling behind when the collector emits faster
+  // than the renderer can paint (the original segfault trigger).
+  const pendingSnapshotRef = useRef<Snapshot | null>(null);
+  const rafRef = useRef<number | null>(null);
+  // Defer the click-driven `selectedPid` change to a non-urgent lane so
+  // that a burst of `onMouseDown` events collapses into a single render.
+  const [selectedPidRaw, setSelectedPidRaw] = useState<number | null>(null);
+  const [, startSelectTransition] = useTransition();
+  const selectedPid = useDeferredValue(selectedPidRaw);
   const [warning, setWarning] = useState<string | null>(null);
   const [view, setView] = useState<ViewFilter>("all");
   const [filter, setFilter] = useState("");
   const [filterFocused, setFilterFocused] = useState(false);
   const [thinkingExpanded, setThinkingExpanded] = useState(false);
 
+  // Stable setter used by `ProjectList` clicks. Wraps the underlying state
+  // update in a transition so rapid clicks do not stack native re-renders.
+  const setSelectedPid = useCallback((pid: number | null) => {
+    startSelectTransition(() => setSelectedPidRaw(pid));
+  }, [startSelectTransition]);
+
   useEffect(() => {
+    const flushSnapshot = (): void => {
+      rafRef.current = null;
+      const next = pendingSnapshotRef.current;
+      if (next === null) return;
+      pendingSnapshotRef.current = null;
+      setSnapshot(next);
+    };
+    const raf = (cb: () => void): number => {
+      const g = globalThis as unknown as {
+        requestAnimationFrame?: (cb: () => void) => number;
+        setTimeout: (cb: () => void, ms: number) => number;
+      };
+      if (typeof g.requestAnimationFrame === "function") {
+        return g.requestAnimationFrame(cb);
+      }
+      return g.setTimeout(cb, 16);
+    };
+    const cancelRaf = (handle: number): void => {
+      const g = globalThis as unknown as {
+        cancelAnimationFrame?: (handle: number) => void;
+        clearTimeout: (handle: number) => void;
+      };
+      if (typeof g.cancelAnimationFrame === "function") {
+        g.cancelAnimationFrame(handle);
+      } else {
+        g.clearTimeout(handle);
+      }
+    };
+    const scheduleSnapshot = (next: Snapshot): void => {
+      pendingSnapshotRef.current = next;
+      if (rafRef.current !== null) return;
+      rafRef.current = raf(flushSnapshot);
+    };
     const unsubscribe = collector.subscribe((event) => {
       if (event.kind === "warning") {
         setWarning(event.message);
@@ -59,10 +116,14 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
         setWarning(`error: ${event.error.message}`);
         return;
       }
-      setSnapshot(collector.snapshot());
+      scheduleSnapshot(collector.snapshot());
     });
     return () => {
       unsubscribe();
+      if (rafRef.current !== null) {
+        cancelRaf(rafRef.current);
+        rafRef.current = null;
+      }
     };
   }, [collector]);
 
@@ -107,7 +168,7 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
   useEffect(() => {
     if (selectedPid === null) return;
     if (!visible.some((i) => i.pid === selectedPid)) setSelectedPid(null);
-  }, [visible, selectedPid]);
+  }, [visible, selectedPid, setSelectedPid]);
 
   useKeyboard((e) => {
     // Filter input has focus — only handle Escape and Enter there.
