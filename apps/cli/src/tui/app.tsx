@@ -187,8 +187,10 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
           onCursorChange={setCursor}
           onSelectPid={setSelectedPid}
           selectedPid={selectedPid}
+          fullWidth={selectedInstance === null}
+          empty={snapshot.instances.length === 0}
         />
-        <SessionDetail instance={selectedInstance} />
+        {selectedInstance ? <SessionDetail instance={selectedInstance} /> : null}
       </box>
       <StatusBar
         instanceCount={visible.length}

@@ -23,6 +23,10 @@ interface ProjectListProps {
   selectedPid: number | null;
   onCursorChange: (next: number) => void;
   onSelectPid: (pid: number | null) => void;
+  /** When true, take the full width (no SessionDetail beside). */
+  fullWidth?: boolean;
+  /** True when the snapshot has zero sessions — render a centered empty state. */
+  empty?: boolean;
 }
 
 const STATUS_COLORS: Record<Instance["status"], string> = {
@@ -44,12 +48,28 @@ export function ProjectList({
   selectedPid,
   onCursorChange,
   onSelectPid,
+  fullWidth,
+  empty,
 }: ProjectListProps): React.ReactNode {
+  if (empty) {
+    return (
+      <box
+        flexDirection="column"
+        width="100%"
+        flexGrow={1}
+        alignItems="center"
+        justifyContent="center"
+      >
+        <text fg="#565f89">{"  no Claude Code sessions running."}</text>
+        <text fg="#414868">{"  start one and it'll appear here."}</text>
+      </box>
+    );
+  }
   return (
     <scrollbox
       focused
       stickyScroll
-      width="50%"
+      width={fullWidth ? "100%" : "50%"}
       flexGrow={1}
       paddingLeft={1}
       paddingRight={1}
@@ -117,7 +137,7 @@ void truncate;
 function shortModel(model: string | null): string {
   if (!model) return "?";
   // Drop trailing date stamps (8-digit suffix).
-  let m = model.replace(/-\d{8}$/, "");
+  const m = model.replace(/-\d{8}$/, "");
   // If the prefix is "claude-", keep "claude-X" for clarity; otherwise
   // drop the longest vendor prefix to surface the family name.
   if (m.toLowerCase().startsWith("claude-")) return m;
