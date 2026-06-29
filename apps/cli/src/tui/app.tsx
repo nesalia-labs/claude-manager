@@ -11,16 +11,17 @@
  *   Esc         → clear filter and blur input
  *   Enter       → (in filter) confirm and blur
  *   r           → force refresh
- *
- * Animation: a single `useTimeline` pulses the status of every running
- * session, giving the TUI a live "breathing" feel without per-row React
- * renders. Cheap because the timeline mutates a CSS-like prop, not state.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import { useKeyboard } from "@opentui/react";
 
-import type { Collector, Instance, Snapshot } from "@claude-manager/core";
+import {
+  type Collector,
+  type Instance,
+  type Snapshot,
+  VERSION,
+} from "@claude-manager/core";
 
 import { FilterInput } from "./filter-input.js";
 import { HeaderBar } from "./header-bar.js";
@@ -168,7 +169,7 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
   return (
     <box flexDirection="column" width="100%" height="100%">
       <HeaderBar
-        version={"0.1.0"}
+        version={VERSION}
         instanceCount={visible.length}
         totalCount={snapshot.instances.length}
         warning={warning}
