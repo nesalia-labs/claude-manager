@@ -21,6 +21,23 @@
   "engines": {
     "node": ">=22"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nesalia-labs/claude-manager.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/nesalia-labs/claude-manager/issues"
+  },
+  "homepage": "https://github.com/nesalia-labs/claude-manager#readme",
+  "keywords": [
+    "claude-code",
+    "tui",
+    "dashboard",
+    "monitor",
+    "windows",
+    "read-only"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsx watch src/index.ts",
