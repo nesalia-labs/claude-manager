@@ -26,7 +26,6 @@ import type { ToolLogSource } from "./sources/tool-log.js";
 import type {
   CollectorEvent,
   Instance,
-  Snapshot,
   StatusThresholds,
   SubAgent,
   ToolLogEntry,
@@ -113,13 +112,20 @@ function buildRow(input: BuildRowInput): Instance {
 }
 
 /**
- * Run one collection cycle. Returns the snapshot and the events that
- * represent the difference between this snapshot and the previous one.
+ * Run one collection cycle. Returns the snapshot plus any warning events
+ * generated along the way. Diff events (add/update/remove) are computed
+ * by `SnapshotStore.setAll` on the collector side, not here.
  */
+export interface CollectOnceResult {
+  readonly atMs: number;
+  readonly instances: readonly Instance[];
+  readonly events: readonly CollectorEvent[];
+}
+
 export async function collectOnce(
   sources: OrchestratorSources,
   options: OrchestratorOptions,
-): Promise<Snapshot> {
+): Promise<CollectOnceResult> {
   const nowMs = sources.clock.now();
   const events: CollectorEvent[] = [];
 
@@ -218,10 +224,10 @@ export async function collectOnce(
   );
 
   sources.transcripts.prune(liveTranscripts);
-  void events;
 
   return {
     atMs: nowMs,
     instances: rows,
+    events,
   };
 }

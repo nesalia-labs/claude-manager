@@ -33,11 +33,11 @@ export async function collectOnce(
     toolLog: createNodeToolLogSource(),
     proc: createProcSource(),
   };
-  const snap = await orchestratorCollectOnce(sources, {
+  const result = await orchestratorCollectOnce(sources, {
     watchMs: 0,
     thresholds: DEFAULT_STATUS_THRESHOLDS,
   });
-  return applyFilter(snap, filter);
+  return applyFilter({ atMs: result.atMs, instances: result.instances }, filter);
 }
 
 function applyFilter(snap: Snapshot, filter: Filter): Snapshot {
