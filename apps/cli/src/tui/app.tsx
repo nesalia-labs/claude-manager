@@ -46,6 +46,7 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
   const [view, setView] = useState<ViewFilter>("all");
   const [filter, setFilter] = useState("");
   const [filterFocused, setFilterFocused] = useState(false);
+  const [thinkingExpanded, setThinkingExpanded] = useState(false);
 
   useEffect(() => {
     const unsubscribe = collector.subscribe((event) => {
@@ -143,6 +144,10 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
       setFilterFocused(true);
       return;
     }
+    if (e.name === "t") {
+      setThinkingExpanded((v) => !v);
+      return;
+    }
     // Number keys 1..4 switch the view tab.
     if (e.name === "1") return setView("all");
     if (e.name === "2") return setView("running");
@@ -190,7 +195,13 @@ export function App({ collector, onQuit }: AppProps): React.ReactNode {
           fullWidth={selectedInstance === null}
           empty={snapshot.instances.length === 0}
         />
-        {selectedInstance ? <SessionDetail instance={selectedInstance} /> : null}
+        {selectedInstance ? (
+          <SessionDetail
+            instance={selectedInstance}
+            thinkingExpanded={thinkingExpanded}
+            onToggleThinking={() => setThinkingExpanded((v) => !v)}
+          />
+        ) : null}
       </box>
       <StatusBar
         instanceCount={visible.length}

@@ -73,12 +73,16 @@ function buildRow(input: BuildRowInput): Instance {
   let contextTokens: number | null = null;
   let prompt: string | null = null;
   let lastMessage: string | null = null;
+  let lastThinking: string | null = null;
+  let thinkingCount = 0;
   if (transcriptResult && detailsAreComplete(transcriptResult.details)) {
     branch = transcriptResult.details.branch ?? null;
     model = transcriptResult.details.model ?? null;
     contextTokens = transcriptResult.details.ctx ?? null;
     prompt = transcriptResult.details.prompt ?? null;
     lastMessage = transcriptResult.details.lastMessage ?? null;
+    lastThinking = transcriptResult.details.lastThinking ?? null;
+    thinkingCount = transcriptResult.details.thinkingCount ?? 0;
   }
 
   return {
@@ -97,6 +101,8 @@ function buildRow(input: BuildRowInput): Instance {
     lastMs,
     prompt,
     lastMessage,
+    lastThinking,
+    thinkingCount,
     processAlive,
     transcript: transcriptPath,
     subagents,

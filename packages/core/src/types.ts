@@ -76,6 +76,10 @@ export interface Instance {
   readonly prompt: string | null;
   /** Most recent assistant text message (the "last message"). */
   readonly lastMessage: string | null;
+  /** Most recent extended-thinking block (the agent's "inner monologue"). */
+  readonly lastThinking: string | null;
+  /** Total number of thinking blocks encountered in the partial walk. */
+  readonly thinkingCount: number;
   readonly processAlive: boolean;
   readonly transcript: string | null;
   readonly subagents: readonly SubAgent[];

@@ -15,8 +15,8 @@ export function StatusBar({
     <box flexDirection="row" width="100%" paddingLeft={1} paddingRight={1}>
       <text fg="#565f89">
         {selectedPid === null
-          ? `${instanceCount} session(s)  ·  ↑/↓/j/k nav  ·  r refresh  ·  q quit`
-          : `selected: pid ${selectedPid}  ·  ↑/↓/j/k nav  ·  q quit`}
+          ? `${instanceCount} session(s)  ·  ↑/↓/j/k nav  ·  / filter  ·  1-4 view  ·  r refresh  ·  q quit`
+          : `selected  ·  ↑/↓/j/k nav  ·  t thinking  ·  / filter  ·  q quit`}
       </text>
     </box>
   );

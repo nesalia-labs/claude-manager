@@ -1,15 +1,22 @@
 /**
- * Session detail panel — full metadata + subagents + tool log.
+ * Session detail panel — full metadata + subagents + tool log + thinking.
  * Rendered on the right when a session is selected.
+ *
+ * The Thinking block is collapsible. `expanded` is controlled by the
+ * parent (App) so the `t` keyboard shortcut and the click handler stay
+ * in sync.
  */
 
 import type { Instance } from "@claude-manager/core";
 
 import { SubagentPanel } from "./subagent-panel.js";
+import { ThinkingPanel } from "./thinking-panel.js";
 import { ToolLogPanel } from "./tool-log.js";
 
 interface SessionDetailProps {
   instance: Instance | null;
+  thinkingExpanded: boolean;
+  onToggleThinking: () => void;
 }
 
 const STATUS_COLORS: Record<Instance["status"], string> = {
@@ -35,7 +42,7 @@ function fmtUptime(sec: number): string {
   if (sec < 60) return `${sec}s`;
   if (sec < 3600) return `${Math.floor(sec / 60)}m`;
   if (sec < 86400) return `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m`;
-  return `${Math.floor(sec / 86400)}d ${Math.floor((sec % 86400) / 3600)}h`;
+  return `${Math.floor(sec / 86400)}d ${Math.floor(sec % 86400 / 3600)}h`;
 }
 
 function fmtAgo(ms: number, now: number): string {
@@ -50,7 +57,11 @@ function fmtAgo(ms: number, now: number): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-export function SessionDetail({ instance }: SessionDetailProps): React.ReactNode {
+export function SessionDetail({
+  instance,
+  thinkingExpanded,
+  onToggleThinking,
+}: SessionDetailProps): React.ReactNode {
   if (!instance) return null;
 
   const statusColor = STATUS_COLORS[instance.status];
@@ -77,11 +88,11 @@ export function SessionDetail({ instance }: SessionDetailProps): React.ReactNode
 
       {/* Metadata block */}
       <box flexDirection="column" width="100%" paddingLeft={2}>
-        <KV label="project" value={instance.project} />
-        <KV label="branch"  value={instance.branch} />
-        <KV label="model"   value={instance.model} />
-        <KV label="tokens"  value={fmtContext(instance.contextTokens)} accent />
-        <KV label="uptime"  value={fmtUptime(instance.uptimeSec)} />
+        <KV label="project"  value={instance.project} />
+        <KV label="branch"   value={instance.branch} />
+        <KV label="model"    value={instance.model} />
+        <KV label="tokens"   value={fmtContext(instance.contextTokens)} accent />
+        <KV label="uptime"   value={fmtUptime(instance.uptimeSec)} />
         <KV label="last"     value={fmtAgo(instance.lastMs, now)} />
         <KV label="subagents" value={`${subagentCount}`} />
         <KV label="tools"     value={`${toolCount}`} />
@@ -97,6 +108,16 @@ export function SessionDetail({ instance }: SessionDetailProps): React.ReactNode
             <text fg="#565f89">{"(no assistant message yet)"}</text>
           )}
         </box>
+      </box>
+
+      {/* Thinking — collapsible via click or `t` */}
+      <box flexDirection="column" width="100%" paddingTop={1}>
+        <ThinkingPanel
+          lastThinking={instance.lastThinking}
+          count={instance.thinkingCount}
+          expanded={thinkingExpanded}
+          onToggle={onToggleThinking}
+        />
       </box>
 
       {/* First user prompt (for context) */}

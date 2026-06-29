@@ -17,9 +17,14 @@ export interface Details {
   lastTurn?: string;
   /** Most recent text content the assistant produced (last "message"). */
   lastMessage?: string;
+  /** Most recent extended-thinking block (the agent's "inner monologue"). */
+  lastThinking?: string;
+  /** Total number of thinking blocks encountered in the partial walk. */
+  thinkingCount?: number;
 }
 
 const LAST_MESSAGE_MAX = 500;
+const LAST_THINKING_MAX = 2000;
 
 function extractLastText(content: unknown): string | null {
   if (!Array.isArray(content)) return null;
@@ -46,6 +51,47 @@ function extractLastText(content: unknown): string | null {
   return flat.length > LAST_MESSAGE_MAX
     ? flat.slice(0, LAST_MESSAGE_MAX - 1) + "…"
     : flat;
+}
+
+/**
+ * Most recent extended-thinking block. We walk blocks from the end of
+ * `content` and concatenate contiguous `thinking` blocks, stopping at
+ * the first non-thinking block. Whitespace is preserved (thinking can
+ * have meaningful line breaks).
+ */
+function extractLastThinking(content: unknown): string | null {
+  if (!Array.isArray(content)) return null;
+  let buf = "";
+  for (let i = content.length - 1; i >= 0; i--) {
+    const block = content[i] as { type?: unknown; thinking?: unknown };
+    if (!block || typeof block !== "object") return null;
+    if (block.type !== "thinking") break;
+    const t = block.thinking;
+    if (typeof t === "string" && t.length > 0) {
+      buf = t.length > buf.length ? t : t + (buf ? "\n" + buf : "");
+    }
+  }
+  if (!buf) return null;
+  const trimmed = buf.trim();
+  if (!trimmed) return null;
+  return trimmed.length > LAST_THINKING_MAX
+    ? trimmed.slice(0, LAST_THINKING_MAX - 1) + "…"
+    : trimmed;
+}
+
+function countThinkingBlocks(content: unknown): number {
+  if (!Array.isArray(content)) return 0;
+  let n = 0;
+  for (const block of content) {
+    if (
+      block &&
+      typeof block === "object" &&
+      (block as { type?: unknown }).type === "thinking"
+    ) {
+      n++;
+    }
+  }
+  return n;
 }
 
 const PROMPT_MAX = 2048;
@@ -86,6 +132,14 @@ export function noteEntry(details: Details, entry: Record<string, unknown>): voi
       if (text) {
         details.lastMessage = text;
       }
+      // Most recent extended-thinking block, plus a running count of all
+      // thinking blocks in the partial walk.
+      const thinking = extractLastThinking(message?.content);
+      if (thinking) {
+        details.lastThinking = thinking;
+      }
+      details.thinkingCount =
+        (details.thinkingCount ?? 0) + countThinkingBlocks(message?.content);
     }
   }
 
