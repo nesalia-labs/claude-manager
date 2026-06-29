@@ -117,6 +117,46 @@ describe("domain/transcript — noteEntry", () => {
     noteEntry(d, { type: "user", message: { content: "x".repeat(5000) } });
     expect(d.prompt?.length).toBe(2048);
   });
+
+  it("concatenates two adjacent text blocks in reverse walk order", () => {
+    // Regression: the previous predicate `t.length > buf.length ? t : ...`
+    // dropped the accumulated `buf` whenever the current `t` was shorter
+    // than the accumulated prose, so the *last* (shorter) text block
+    // would survive while the earlier (longer) one was silently dropped.
+    const d: Parameters<typeof noteEntry>[0] = {};
+    noteEntry(d, {
+      type: "assistant",
+      message: {
+        model: "claude-sonnet-4-5",
+        usage: { input_tokens: 1 },
+        content: [
+          { type: "text", text: "first message longer than the trailing one" },
+          { type: "text", text: "tail" },
+        ],
+      },
+    });
+    expect(d.lastMessage).toBe(
+      "first message longer than the trailing one tail",
+    );
+  });
+
+  it("concatenates two adjacent thinking blocks in reverse walk order", () => {
+    const d: Parameters<typeof noteEntry>[0] = {};
+    noteEntry(d, {
+      type: "assistant",
+      message: {
+        model: "claude-sonnet-4-5",
+        usage: { input_tokens: 1 },
+        content: [
+          { type: "thinking", thinking: "first thought longer than the trailing one" },
+          { type: "thinking", thinking: "tail" },
+        ],
+      },
+    });
+    expect(d.lastThinking).toBe(
+      "first thought longer than the trailing one\ntail",
+    );
+  });
 });
 
 describe("domain/transcript — detailsAreComplete", () => {
